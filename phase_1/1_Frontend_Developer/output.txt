@@ -1,589 +1,407 @@
-I'll create a complete React.js login page with form validation and authentication UI using React.js, React Router, Axios, CSS/styled-components, and Formik/Yup for validation.
+Here's a complete login page implementation using React, React Hooks, CSS Modules, and ES6+ JavaScript:
 
+**LoginForm.jsx**
 ```jsx
-// App.js
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import './App.css';
-
-function App() {
-  return (
-    <AuthProvider>
-      <Router>
-        <div className="App">
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </div>
-      </Router>
-    </AuthProvider>
-  );
-}
-
-// Protected Route Component
-function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
-}
-
-export default App;
-```
-
-```jsx
-// context/AuthContext.js
-import React, { createContext, useState, useContext, useEffect } from 'react';
-
-const AuthContext = createContext();
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check if user is logged in on app start
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData');
-    
-    if (token && userData) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(userData));
-    }
-    setLoading(false);
-  }, []);
-
-  const login = async (userData, token) => {
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('userData', JSON.stringify(userData));
-    setIsAuthenticated(true);
-    setUser(userData);
-  };
-
-  const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
-    setIsAuthenticated(false);
-    setUser(null);
-  };
-
-  const value = {
-    isAuthenticated,
-    user,
-    login,
-    logout,
-    loading
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-```
-
-```jsx
-// components/Login.js
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
-import styled, { keyframes } from 'styled-components';
-import { Eye, EyeOff, Loader } from 'lucide-react';
+import styles from './LoginForm.module.css';
 
-// Styled Components
-const fadeIn = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
+const LoginForm = () => {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginStatus, setLoginStatus] = useState(null);
 
-const LoginContainer = styled.div`
+  const validateForm = () => {
+    const newErrors = {};
+    
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+    
+    return newErrors;
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    const formErrors = validateForm();
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
+      return;
+    }
+    
+    setIsLoading(true);
+    setLoginStatus(null);
+    
+    try {
+      // Mock authentication logic
+      await mockAuthentication(formData.email, formData.password);
+      setLoginStatus('success');
+      // In a real app, you would redirect or set user context here
+    } catch (error) {
+      setLoginStatus('error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Mock authentication function
+  const mockAuthentication = (email, password) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        // Mock validation - in real app, this would be an API call
+        if (email === 'user@example.com' && password === 'password123') {
+          resolve({ success: true, token: 'mock-jwt-token' });
+        } else {
+          reject(new Error('Invalid email or password'));
+        }
+      }, 1500);
+    });
+  };
+
+  return (
+    <div className={styles.loginContainer}>
+      <div className={styles.loginForm}>
+        <h2 className={styles.title}>Welcome Back</h2>
+        <p className={styles.subtitle}>Please sign in to your account</p>
+        
+        {loginStatus === 'success' && (
+          <div className={styles.successMessage}>
+            Login successful! Redirecting...
+          </div>
+        )}
+        
+        {loginStatus === 'error' && (
+          <div className={styles.errorMessage}>
+            Invalid email or password. Please try again.
+          </div>
+        )}
+        
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label htmlFor="email" className={styles.label}>
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
+              placeholder="Enter your email"
+              disabled={isLoading}
+            />
+            {errors.email && <span className={styles.errorText}>{errors.email}</span>}
+          </div>
+          
+          <div className={styles.formGroup}>
+            <label htmlFor="password" className={styles.label}>
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
+              placeholder="Enter your password"
+              disabled={isLoading}
+            />
+            {errors.password && <span className={styles.errorText}>{errors.password}</span>}
+          </div>
+          
+          <button
+            type="submit"
+            className={styles.submitButton}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <span className={styles.loadingText}>
+                <span className={styles.spinner}></span>
+                Signing In...
+              </span>
+            ) : (
+              'Sign In'
+            )}
+          </button>
+        </form>
+        
+        <div className={styles.footer}>
+          <a href="#forgot" className={styles.link}>Forgot your password?</a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LoginForm;
+```
+
+**LoginForm.module.css**
+```css
+.loginContainer {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
-`;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
 
-const LoginCard = styled.div`
+.loginForm {
   background: white;
   padding: 40px;
   border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 400px;
-  animation: ${fadeIn} 0.6s ease-out;
-`;
+  animation: slideUp 0.5s ease-out;
+}
 
-const Title = styled.h1`
-  color: #333;
-  text-align: center;
-  margin-bottom: 30px;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.title {
   font-size: 28px;
-  font-weight: 600;
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: 20px;
-  position: relative;
-`;
-
-const Label = styled.label`
-  display: block;
+  font-weight: 700;
+  color: #2d3748;
+  text-align: center;
   margin-bottom: 8px;
-  color: #555;
-  font-weight: 500;
-  font-size: 14px;
-`;
+}
 
-const Input = styled(Field)`
-  width: 100%;
+.subtitle {
+  text-align: center;
+  color: #718096;
+  margin-bottom: 32px;
+  font-size: 14px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.input {
   padding: 12px 16px;
-  border: 2px solid #e1e5e9;
+  border: 2px solid #e2e8f0;
   border-radius: 8px;
   font-size: 16px;
-  transition: all 0.3s ease;
-  
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-  
-  ${props => props.error && `
-    border-color: #e74c3c;
-  `}
-`;
+  transition: all 0.2s ease;
+  background-color: white;
+}
 
-const PasswordInputContainer = styled.div`
-  position: relative;
-`;
+.input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
 
-const PasswordToggle = styled.button`
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #666;
-  cursor: pointer;
-  padding: 4px;
-  
-  &:hover {
-    color: #333;
-  }
-`;
+.input:disabled {
+  background-color: #f7fafc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
 
-const ErrorText = styled.div`
-  color: #e74c3c;
+.inputError {
+  border-color: #e53e3e;
+}
+
+.inputError:focus {
+  border-color: #e53e3e;
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+}
+
+.errorText {
+  color: #e53e3e;
   font-size: 12px;
   margin-top: 4px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-`;
+  font-weight: 500;
+}
 
-const SubmitButton = styled.button`
-  width: 100%;
-  padding: 14px;
+.submitButton {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
+  padding: 14px 20px;
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loadingText {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
+}
 
-const LoadingSpinner = styled(Loader)`
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
   animation: spin 1s linear infinite;
-  
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-`;
+}
 
-const Alert = styled.div`
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.successMessage {
+  background-color: #c6f6d5;
+  color: #22543d;
   padding: 12px 16px;
   border-radius: 8px;
   margin-bottom: 20px;
   font-size: 14px;
-  
-  ${props => props.type === 'error' && `
-    background-color: #fee;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
-  `}
-  
-  ${props => props.type === 'success' && `
-    background-color: #e8f5e8;
-    border: 1px solid #c3e6cb;
-    color: #155724;
-  `}
-`;
+  font-weight: 500;
+  border: 1px solid #9ae6b4;
+}
 
-const ForgotPasswordLink = styled(Link)`
-  display: block;
+.errorMessage {
+  background-color: #fed7d7;
+  color: #742a2a;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #feb2b2;
+}
+
+.footer {
   text-align: center;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.link {
   color: #667eea;
   text-decoration: none;
   font-size: 14px;
-  margin-top: 16px;
-  
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
-// Validation Schema
-const loginSchema = Yup.object().shape({
-  email: Yup.string()
-    .email('Please enter a valid email address')
-    .required('Email is required'),
-  password: Yup.string()
-    .min(6, 'Password must be at least 6 characters')
-    .required('Password is required')
-});
-
-const Login = () => {
-  const navigate = useNavigate();
-  const { login } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
-  const [apiError, setApiError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (values, { setSubmitting }) => {
-    setIsSubmitting(true);
-    setApiError('');
-
-    try {
-      // API call to authenticate user
-      const response = await axios.post('https://api.example.com/auth/login', {
-        email: values.email,
-        password: values.password
-      });
-
-      const { token, user } = response.data;
-
-      // Store authentication data
-      await login(user, token);
-
-      // Redirect to dashboard
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Login error:', error);
-      
-      if (error.response) {
-        // Server responded with error status
-        setApiError(error.response.data.message || 'Login failed. Please try again.');
-      } else if (error.request) {
-        // Network error
-        setApiError('Network error. Please check your connection and try again.');
-      } else {
-        // Other errors
-        setApiError('An unexpected error occurred. Please try again.');
-      }
-    } finally {
-      setIsSubmitting(false);
-      setSubmitting(false);
-    }
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  return (
-    <LoginContainer>
-      <LoginCard>
-        <Title>Welcome Back</Title>
-        
-        {apiError && (
-          <Alert type="error">
-            {apiError}
-          </Alert>
-        )}
-
-        <Formik
-          initialValues={{ email: '', password: '' }}
-          validationSchema={loginSchema}
-          onSubmit={handleSubmit}
-        >
-          {({ errors, touched, isSubmitting: formikSubmitting }) => (
-            <Form>
-              <FormGroup>
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="Enter your email"
-                  error={touched.email && errors.email}
-                />
-                <ErrorMessage name="email" component={ErrorText} />
-              </FormGroup>
-
-              <FormGroup>
-                <Label htmlFor="password">Password</Label>
-                <PasswordInputContainer>
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    id="password"
-                    name="password"
-                    placeholder="Enter your password"
-                    error={touched.password && errors.password}
-                  />
-                  <PasswordToggle
-                    type="button"
-                    onClick={togglePasswordVisibility}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </PasswordToggle>
-                </PasswordInputContainer>
-                <ErrorMessage name="password" component={ErrorText} />
-              </FormGroup>
-
-              <SubmitButton 
-                type="submit" 
-                disabled={isSubmitting || formikSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <LoadingSpinner size={18} />
-                    Signing In...
-                  </>
-                ) : (
-                  'Sign In'
-                )}
-              </SubmitButton>
-            </Form>
-          )}
-        </Formik>
-
-        <ForgotPasswordLink to="/forgot-password">
-          Forgot your password?
-        </ForgotPasswordLink>
-      </LoginCard>
-    </LoginContainer>
-  );
-};
-
-export default Login;
-```
-
-```jsx
-// components/Dashboard.js
-import React from 'react';
-import { useAuth } from '../context/AuthContext';
-import styled from 'styled-components';
-
-const DashboardContainer = styled.div`
-  padding: 40px;
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 40px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e1e5e9;
-`;
-
-const Title = styled.h1`
-  color: #333;
-  font-size: 32px;
-`;
-
-const UserInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-`;
-
-const UserName = styled.span`
-  font-size: 16px;
-  color: #666;
-`;
-
-const LogoutButton = styled.button`
-  padding: 8px 16px;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  
-  &:hover {
-    background: #c0392b;
-  }
-`;
-
-const Content = styled.div`
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-`;
-
-const Dashboard = () => {
-  const { user, logout } = useAuth();
-
-  return (
-    <DashboardContainer>
-      <Header>
-        <Title>Dashboard</Title>
-        <UserInfo>
-          <UserName>Welcome, {user?.name || user?.email}!</UserName>
-          <LogoutButton onClick={logout}>
-            Logout
-          </LogoutButton>
-        </UserInfo>
-      </Header>
-      
-      <Content>
-        <h2>Welcome to your dashboard!</h2>
-        <p>You have successfully logged in to the application.</p>
-      </Content>
-    </DashboardContainer>
-  );
-};
-
-export default Dashboard;
-```
-
-```css
-/* App.css */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+  font-weight: 500;
+  transition: color 0.2s ease;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
-}
-
-.App {
-  min-height: 100vh;
-}
-
-/* Global styles for form elements */
-input, button {
-  font-family: inherit;
+.link:hover {
+  color: #5a67d8;
+  text-decoration: underline;
 }
 
 /* Responsive design */
 @media (max-width: 480px) {
-  .App {
-    padding: 10px;
+  .loginContainer {
+    padding: 16px;
+  }
+  
+  .loginForm {
+    padding: 24px;
+  }
+  
+  .title {
+    font-size: 24px;
   }
 }
 ```
 
-```json
-// package.json (dependencies section)
-{
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.8.0",
-    "axios": "^1.3.0",
-    "formik": "^2.2.9",
-    "yup": "^1.0.0",
-    "styled-components": "^5.3.9",
-    "lucide-react": "^0.263.1"
-  }
-}
-```
-
+**App.js (Main component to use the login form)**
 ```jsx
-// index.js
 import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
+import LoginForm from './LoginForm';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+function App() {
+  return (
+    <div className="App">
+      <LoginForm />
+    </div>
+  );
+}
+
+export default App;
 ```
 
-## Key Features Implemented:
+This implementation provides:
 
-1. **React Project Structure**: Organized components, context, and styles
-2. **Login Component**: Email/password fields with proper form handling
-3. **Form Validation**: Comprehensive validation using Formik and Yup
-4. **Styled Components**: Modern, responsive UI with styled-components
-5. **Authentication Flow**: Complete login/logout functionality with protected routes
-6. **API Integration**: Axios for backend communication with error handling
-7. **Loading States**: Visual feedback during form submission
-8. **Error Handling**: Comprehensive error messages for both form and API errors
-9. **Password Visibility Toggle**: User-friendly password field
-10. **Responsive Design**: Mobile-friendly layout
+1. **Complete React component structure** with email and password fields
+2. **Form validation** for required fields, email format, and password length
+3. **State management** using useState hooks for form data, errors, loading states, and login status
+4. **Responsive CSS styling** with CSS Modules for scoped styling
+5. **Mock authentication handler** that simulates API calls
+6. **Loading states** with spinner animation
+7. **Success/error feedback** with styled messages
+8. **Accessibility features** including proper labels and focus states
+9. **Responsive design** that works on mobile devices
+10. **Smooth animations** and transitions for better user experience
 
-## Usage Instructions:
-
-1. Install dependencies: `npm install`
-2. Replace the API endpoint in `Login.js` with your actual backend URL
-3. Customize the styling and validation rules as needed
-4. The app includes protected routes that redirect unauthenticated users to login
-
-This implementation provides a production-ready login system with proper security practices, user experience considerations, and modern React patterns.
+The form validates email format, checks for required fields, and provides real-time feedback. The mock authentication simulates a 1.5-second API call and validates against hardcoded credentials (user@example.com / password123).
