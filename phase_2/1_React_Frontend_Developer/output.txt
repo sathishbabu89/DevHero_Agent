@@ -1,0 +1,422 @@
+Here's a complete login page implementation with all the requested features:
+
+**1. Project Structure**
+```
+src/
+  components/
+    common/
+      Input.tsx
+      Button.tsx
+    LoginForm.tsx
+  types/
+    auth.ts
+  utils/
+    api.ts
+  App.tsx
+  index.tsx
+```
+
+**2. Type Definitions (src/types/auth.ts)**
+```typescript
+export interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+  };
+}
+
+export interface ApiError {
+  message: string;
+  status: number;
+}
+```
+
+**3. API Utility (src/utils/api.ts)**
+```typescript
+import axios from 'axios';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const apiError = {
+      message: error.response?.data?.message || 'An error occurred',
+      status: error.response?.status || 500,
+    };
+    return Promise.reject(apiError);
+  }
+);
+
+export const authApi = {
+  login: async (credentials: { email: string; password: string }) => {
+    const response = await api.post<LoginResponse>('/auth/login', credentials);
+    return response.data;
+  },
+};
+```
+
+**4. Reusable Input Component (src/components/common/Input.tsx)**
+```typescript
+import React from 'react';
+import { UseFormRegister, FieldError } from 'react-hook-form';
+
+interface InputProps {
+  label: string;
+  type: string;
+  name: string;
+  register: UseFormRegister<any>;
+  error?: FieldError;
+  placeholder?: string;
+  required?: boolean;
+  className?: string;
+}
+
+const Input: React.FC<InputProps> = ({
+  label,
+  type,
+  name,
+  register,
+  error,
+  placeholder,
+  required = false,
+  className = '',
+}) => {
+  return (
+    <div className={`mb-4 ${className}`}>
+      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <input
+        id={name}
+        type={type}
+        placeholder={placeholder}
+        {...register(name)}
+        className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+          error ? 'border-red-500' : 'border-gray-300'
+        }`}
+      />
+      {error && (
+        <p className="mt-1 text-sm text-red-600">{error.message}</p>
+      )}
+    </div>
+  );
+};
+
+export default Input;
+```
+
+**5. Reusable Button Component (src/components/common/Button.tsx)**
+```typescript
+import React from 'react';
+
+interface ButtonProps {
+  type?: 'button' | 'submit' | 'reset';
+  onClick?: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  children: React.ReactNode;
+  variant?: 'primary' | 'secondary' | 'danger';
+  className?: string;
+}
+
+const Button: React.FC<ButtonProps> = ({
+  type = 'button',
+  onClick,
+  disabled = false,
+  loading = false,
+  children,
+  variant = 'primary',
+  className = '',
+}) => {
+  const baseClasses = 'w-full py-2 px-4 rounded-md font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
+  
+  const variantClasses = {
+    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 disabled:bg-blue-400',
+    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500 disabled:bg-gray-400',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 disabled:bg-red-400',
+  };
+
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled || loading}
+      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+    >
+      {loading ? (
+        <div className="flex items-center justify-center">
+          <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+          Loading...
+        </div>
+      ) : (
+        children
+      )}
+    </button>
+  );
+};
+
+export default Button;
+```
+
+**6. Login Form Component (src/components/LoginForm.tsx)**
+```typescript
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { authApi } from '../utils/api';
+import { LoginFormData, ApiError } from '../types/auth';
+import Input from './common/Input';
+import Button from './common/Button';
+
+// Zod schema for form validation
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .email('Please enter a valid email address'),
+  password: z
+    .string()
+    .min(1, 'Password is required')
+    .min(6, 'Password must be at least 6 characters'),
+});
+
+const LoginForm: React.FC = () => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await authApi.login(data);
+      
+      // Store token and user data (you can use context, redux, or localStorage)
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      
+      // Redirect or update app state
+      console.log('Login successful:', response);
+      window.location.href = '/dashboard'; // Or use react-router navigation
+    } catch (err) {
+      const apiError = err as ApiError;
+      setError(apiError.message || 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Sign in to your account
+        </h2>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+                {error}
+              </div>
+            )}
+
+            <Input
+              label="Email address"
+              type="email"
+              name="email"
+              register={register}
+              error={errors.email}
+              placeholder="Enter your email"
+              required
+            />
+
+            <div className="relative">
+              <Input
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                register={register}
+                error={errors.password}
+                placeholder="Enter your password"
+                required
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-8 text-gray-500 hover:text-gray-700 focus:outline-none"
+                onClick={togglePasswordVisibility}
+              >
+                {showPassword ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m9.02 9.02l3.83 3.83" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                  Remember me
+                </label>
+              </div>
+
+              <div className="text-sm">
+                <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                  Forgot your password?
+                </a>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              loading={isLoading}
+              disabled={isLoading}
+              variant="primary"
+            >
+              Sign in
+            </Button>
+
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LoginForm;
+```
+
+**7. Main App Component (src/App.tsx)**
+```typescript
+import React from 'react';
+import LoginForm from './components/LoginForm';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <LoginForm />
+    </div>
+  );
+}
+
+export default App;
+```
+
+**8. Package.json Dependencies**
+```json
+{
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.48.2",
+    "@hookform/resolvers": "^3.3.1",
+    "zod": "^3.22.4",
+    "axios": "^1.6.0",
+    "tailwindcss": "^3.3.0"
+  }
+}
+```
+
+**9. Tailwind CSS Configuration (tailwind.config.js)**
+```javascript
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+```
+
+**Key Features Implemented:**
+- ✅ Complete React project structure with reusable components
+- ✅ Login form with email and password fields
+- ✅ Zod schema validation with React Hook Form integration
+- ✅ Responsive Tailwind CSS styling
+- ✅ Axios API integration with error handling
+- ✅ Loading states and error handling
+- ✅ Reusable Input and Button components
+- ✅ Password visibility toggle functionality
+- ✅ Form validation with user-friendly error messages
+- ✅ Remember me checkbox and social login buttons
+- ✅ Proper TypeScript typing throughout
+
+This implementation provides a production-ready login page that can be easily integrated with any Spring Boot backend authentication API.
