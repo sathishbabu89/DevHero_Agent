@@ -1,262 +1,469 @@
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+I'll create a complete Angular login page with reactive form, validation, and Angular Material styling. Here's the complete implementation:
 
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
+## 1. Project Structure Setup
 
-        .login-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            padding: 40px;
-            width: 100%;
-            max-width: 400px;
-            transition: transform 0.3s ease;
-        }
+First, ensure you have the necessary Angular Material modules installed and imported:
 
-        .login-container:hover {
-            transform: translateY(-5px);
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .login-header h1 {
-            color: #333;
-            font-size: 2rem;
-            margin-bottom: 10px;
-        }
-
-        .login-header p {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e1e1e1;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background-color: #f8f9fa;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #667eea;
-            background-color: white;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-control.error {
-            border-color: #e74c3c;
-            background-color: #fdf2f2;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .checkbox-group input {
-            margin-right: 10px;
-            transform: scale(1.2);
-        }
-
-        .checkbox-group label {
-            margin-bottom: 0;
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-login:active {
-            transform: translateY(0);
-        }
-
-        .error-message {
-            color: #e74c3c;
-            font-size: 0.85rem;
-            margin-top: 5px;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .login-footer {
-            text-align: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e1e1e1;
-        }
-
-        .login-footer a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .login-footer a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 30px 20px;
-            }
-            
-            .login-header h1 {
-                font-size: 1.5rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="login-container">
-        <div class="login-header">
-            <h1>Welcome Back</h1>
-            <p>Please sign in to your account</p>
-        </div>
-        
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="username">Username or Email</label>
-                <input type="text" id="username" class="form-control" placeholder="Enter your username or email">
-                <div class="error-message" id="usernameError">Please enter your username or email</div>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="Enter your password">
-                <div class="error-message" id="passwordError">Please enter your password</div>
-            </div>
-            
-            <div class="checkbox-group">
-                <input type="checkbox" id="rememberMe">
-                <label for="rememberMe">Remember me</label>
-            </div>
-            
-            <button type="submit" class="btn-login">Sign In</button>
-        </form>
-        
-        <div class="login-footer">
-            <a href="#">Forgot your password?</a>
-        </div>
-    </div>
-
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username');
-            const password = document.getElementById('password');
-            const usernameError = document.getElementById('usernameError');
-            const passwordError = document.getElementById('passwordError');
-            
-            let isValid = true;
-            
-            // Reset error states
-            username.classList.remove('error');
-            password.classList.remove('error');
-            usernameError.classList.remove('show');
-            passwordError.classList.remove('show');
-            
-            // Validate username/email
-            if (!username.value.trim()) {
-                username.classList.add('error');
-                usernameError.classList.add('show');
-                isValid = false;
-            }
-            
-            // Validate password
-            if (!password.value.trim()) {
-                password.classList.add('error');
-                passwordError.classList.add('show');
-                isValid = false;
-            }
-            
-            if (isValid) {
-                // Form is valid - you can add your login logic here
-                console.log('Form submitted successfully!');
-                console.log('Username:', username.value);
-                console.log('Password:', password.value);
-                console.log('Remember me:', document.getElementById('rememberMe').checked);
-                
-                // Show success message (in a real app, you would redirect or make an API call)
-                alert('Login successful! (This is a demo)');
-                
-                // Reset form
-                this.reset();
-            }
-        });
-
-        // Add real-time validation
-        document.getElementById('username').addEventListener('input', function() {
-            if (this.value.trim()) {
-                this.classList.remove('error');
-                document.getElementById('usernameError').classList.remove('show');
-            }
-        });
-
-        document.getElementById('password').addEventListener('input', function() {
-            if (this.value.trim()) {
-                this.classList.remove('error');
-                document.getElementById('passwordError').classList.remove('show');
-            }
-        });
-    </script>
-</body>
-</html>
+```bash
+ng add @angular/material
 ```
+
+## 2. Module Configuration (app.module.ts)
+
+```typescript
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { ReactiveFormsModule } from '@angular/forms';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
+// Angular Material Modules
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
+import { AppComponent } from './app.component';
+import { LoginComponent } from './login/login.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    LoginComponent
+  ],
+  imports: [
+    BrowserModule,
+    ReactiveFormsModule,
+    BrowserAnimationsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+```
+
+## 3. Login Component TypeScript (login.component.ts)
+
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.scss']
+})
+export class LoginComponent implements OnInit {
+  loginForm: FormGroup;
+  hidePassword = true;
+  isLoading = false;
+
+  constructor(private fb: FormBuilder) {
+    this.loginForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]]
+    });
+  }
+
+  ngOnInit(): void {}
+
+  get email() {
+    return this.loginForm.get('email');
+  }
+
+  get password() {
+    return this.loginForm.get('password');
+  }
+
+  getEmailErrorMessage(): string {
+    if (this.email?.hasError('required')) {
+      return 'Email is required';
+    }
+    return this.email?.hasError('email') ? 'Please enter a valid email' : '';
+  }
+
+  getPasswordErrorMessage(): string {
+    if (this.password?.hasError('required')) {
+      return 'Password is required';
+    }
+    return this.password?.hasError('minlength') ? 'Password must be at least 6 characters' : '';
+  }
+
+  onSubmit(): void {
+    if (this.loginForm.valid) {
+      this.isLoading = true;
+      
+      // Simulate API call
+      setTimeout(() => {
+        console.log('Login form submitted:', this.loginForm.value);
+        this.isLoading = false;
+        
+        // Here you would typically call your authentication service
+        // this.authService.login(this.loginForm.value).subscribe(...)
+      }, 2000);
+    } else {
+      // Mark all fields as touched to trigger validation messages
+      this.loginForm.markAllAsTouched();
+    }
+  }
+
+  togglePasswordVisibility(): void {
+    this.hidePassword = !this.hidePassword;
+  }
+}
+```
+
+## 4. Login Component Template (login.component.html)
+
+```html
+<div class="login-container">
+  <mat-card class="login-card">
+    <mat-card-header class="login-header">
+      <mat-card-title class="login-title">Welcome Back</mat-card-title>
+      <mat-card-subtitle class="login-subtitle">Please sign in to your account</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        <!-- Email Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input 
+            matInput 
+            formControlName="email" 
+            type="email" 
+            placeholder="Enter your email"
+            autocomplete="email">
+          <mat-icon matSuffix>email</mat-icon>
+          
+          <mat-error *ngIf="email?.invalid && email?.touched">
+            {{ getEmailErrorMessage() }}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Password Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input 
+            matInput 
+            formControlName="password" 
+            [type]="hidePassword ? 'password' : 'text'"
+            placeholder="Enter your password"
+            autocomplete="current-password">
+          <button 
+            mat-icon-button 
+            matSuffix 
+            type="button"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="'Hide password'"
+            [attr.aria-pressed]="hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          
+          <mat-error *ngIf="password?.invalid && password?.touched">
+            {{ getPasswordErrorMessage() }}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Submit Button -->
+        <button 
+          mat-raised-button 
+          color="primary" 
+          type="submit" 
+          class="login-button full-width"
+          [disabled]="isLoading || loginForm.invalid">
+          
+          <span *ngIf="!isLoading">Sign In</span>
+          <div *ngIf="isLoading" class="button-loading">
+            <mat-spinner diameter="20"></mat-spinner>
+            <span>Signing In...</span>
+          </div>
+        </button>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions class="login-actions">
+      <div class="forgot-password">
+        <a href="#" class="forgot-link">Forgot your password?</a>
+      </div>
+      <div class="signup-link">
+        Don't have an account? <a href="#" class="signup-text">Sign up</a>
+      </div>
+    </mat-card-actions>
+  </mat-card>
+</div>
+```
+
+## 5. Login Component Styles (login.component.scss)
+
+```scss
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  box-sizing: border-box;
+
+  @media (max-width: 600px) {
+    padding: 10px;
+  }
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+
+  @media (max-width: 600px) {
+    padding: 1.5rem;
+    margin: 10px;
+  }
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  .login-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+
+  .login-subtitle {
+    font-size: 1rem;
+    color: #666;
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.login-button {
+  height: 48px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  border-radius: 8px;
+  margin-top: 1rem;
+  transition: all 0.3s ease;
+
+  &:hover:not([disabled]) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.button-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  ::ng-deep .mat-progress-spinner circle {
+    stroke: white;
+  }
+}
+
+.login-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 0;
+
+  .forgot-password {
+    text-align: center;
+
+    .forgot-link {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
+
+      &:hover {
+        color: #764ba2;
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .signup-link {
+    color: #666;
+    font-size: 0.9rem;
+
+    .signup-text {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+      margin-left: 0.25rem;
+
+      &:hover {
+        color: #764ba2;
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+// Custom styles for form fields
+::ng-deep {
+  .mat-form-field-outline {
+    border-radius: 8px;
+  }
+
+  .mat-form-field-appearance-outline.mat-form-field-invalid .mat-form-field-outline-thick {
+    color: #f44336;
+  }
+
+  .mat-form-field-appearance-outline .mat-form-field-outline {
+    color: rgba(0, 0, 0, 0.1);
+  }
+
+  .mat-form-field-appearance-outline.mat-focused .mat-form-field-outline-thick {
+    color: #667eea;
+  }
+
+  .mat-input-element {
+    font-size: 1rem;
+  }
+}
+
+// Responsive design
+@media (max-width: 480px) {
+  .login-card {
+    padding: 1rem;
+  }
+
+  .login-title {
+    font-size: 1.75rem !important;
+  }
+
+  .login-subtitle {
+    font-size: 0.9rem !important;
+  }
+}
+```
+
+## 6. App Component (app.component.html)
+
+```html
+<app-login></app-login>
+```
+
+## 7. App Component (app.component.ts)
+
+```typescript
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
+})
+export class AppComponent {
+  title = 'login-app';
+}
+```
+
+## 8. Global Styles (styles.scss)
+
+```scss
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f5f5f5;
+}
+
+/* Material Overrides */
+.mat-card {
+  border-radius: 12px !important;
+}
+
+.mat-raised-button {
+  border-radius: 8px !important;
+}
+
+/* Utility Classes */
+.text-center {
+  text-align: center;
+}
+
+.mt-2 {
+  margin-top: 1rem;
+}
+
+.mb-2 {
+  margin-bottom: 1rem;
+}
+```
+
+## 9. Testing the Component
+
+To test the login page functionality:
+
+1. **Form Validation Test**:
+   - Try submitting empty form - should show validation errors
+   - Enter invalid email format - should show email validation error
+   - Enter password less than 6 characters - should show password validation error
+
+2. **Responsive Design Test**:
+   - Test on different screen sizes (mobile, tablet, desktop)
+   - Verify the layout adapts properly
+
+3. **Functionality Test**:
+   - Test password visibility toggle
+   - Verify loading state during form submission
+   - Check that form is only submitted when valid
+
+## Key Features Implemented:
+
+- ✅ Reactive form with FormBuilder
+- ✅ Email and password validation (required, email format, min length)
+- ✅ Real-time validation feedback
+- ✅ Password visibility toggle
+- ✅ Loading state with spinner
+- ✅ Responsive design with mobile support
+- ✅ Clean Angular Material styling
+- ✅ Gradient background with glassmorphism effect
+- ✅ Accessible form controls
+- ✅ Proper error messaging
+- ✅ Hover effects and transitions
+
+The login page is now fully functional with professional styling, comprehensive validation, and responsive design using Angular Material components.
