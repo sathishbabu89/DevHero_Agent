@@ -1,407 +1,262 @@
-Here's a complete login page implementation using React, React Hooks, CSS Modules, and ES6+ JavaScript:
-
-**LoginForm.jsx**
-```jsx
-import React, { useState } from 'react';
-import styles from './LoginForm.module.css';
-
-const LoginForm = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
-  
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [loginStatus, setLoginStatus] = useState(null);
-
-  const validateForm = () => {
-    const newErrors = {};
-    
-    // Email validation
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-    
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    
-    return newErrors;
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    const formErrors = validateForm();
-    if (Object.keys(formErrors).length > 0) {
-      setErrors(formErrors);
-      return;
-    }
-    
-    setIsLoading(true);
-    setLoginStatus(null);
-    
-    try {
-      // Mock authentication logic
-      await mockAuthentication(formData.email, formData.password);
-      setLoginStatus('success');
-      // In a real app, you would redirect or set user context here
-    } catch (error) {
-      setLoginStatus('error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Mock authentication function
-  const mockAuthentication = (email, password) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Mock validation - in real app, this would be an API call
-        if (email === 'user@example.com' && password === 'password123') {
-          resolve({ success: true, token: 'mock-jwt-token' });
-        } else {
-          reject(new Error('Invalid email or password'));
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-      }, 1500);
-    });
-  };
 
-  return (
-    <div className={styles.loginContainer}>
-      <div className={styles.loginForm}>
-        <h2 className={styles.title}>Welcome Back</h2>
-        <p className={styles.subtitle}>Please sign in to your account</p>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            transition: transform 0.3s ease;
+        }
+
+        .login-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-control.error {
+            border-color: #e74c3c;
+            background-color: #fdf2f2;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .checkbox-group input {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e1e1;
+        }
+
+        .login-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Welcome Back</h1>
+            <p>Please sign in to your account</p>
+        </div>
         
-        {loginStatus === 'success' && (
-          <div className={styles.successMessage}>
-            Login successful! Redirecting...
-          </div>
-        )}
-        
-        {loginStatus === 'error' && (
-          <div className={styles.errorMessage}>
-            Invalid email or password. Please try again.
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.formGroup}>
-            <label htmlFor="email" className={styles.label}>
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
-              placeholder="Enter your email"
-              disabled={isLoading}
-            />
-            {errors.email && <span className={styles.errorText}>{errors.email}</span>}
-          </div>
-          
-          <div className={styles.formGroup}>
-            <label htmlFor="password" className={styles.label}>
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
-              placeholder="Enter your password"
-              disabled={isLoading}
-            />
-            {errors.password && <span className={styles.errorText}>{errors.password}</span>}
-          </div>
-          
-          <button
-            type="submit"
-            className={styles.submitButton}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <span className={styles.loadingText}>
-                <span className={styles.spinner}></span>
-                Signing In...
-              </span>
-            ) : (
-              'Sign In'
-            )}
-          </button>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username or Email</label>
+                <input type="text" id="username" class="form-control" placeholder="Enter your username or email">
+                <div class="error-message" id="usernameError">Please enter your username or email</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter your password">
+                <div class="error-message" id="passwordError">Please enter your password</div>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="rememberMe">
+                <label for="rememberMe">Remember me</label>
+            </div>
+            
+            <button type="submit" class="btn-login">Sign In</button>
         </form>
         
-        <div className={styles.footer}>
-          <a href="#forgot" className={styles.link}>Forgot your password?</a>
+        <div class="login-footer">
+            <a href="#">Forgot your password?</a>
         </div>
-      </div>
     </div>
-  );
-};
 
-export default LoginForm;
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username');
+            const password = document.getElementById('password');
+            const usernameError = document.getElementById('usernameError');
+            const passwordError = document.getElementById('passwordError');
+            
+            let isValid = true;
+            
+            // Reset error states
+            username.classList.remove('error');
+            password.classList.remove('error');
+            usernameError.classList.remove('show');
+            passwordError.classList.remove('show');
+            
+            // Validate username/email
+            if (!username.value.trim()) {
+                username.classList.add('error');
+                usernameError.classList.add('show');
+                isValid = false;
+            }
+            
+            // Validate password
+            if (!password.value.trim()) {
+                password.classList.add('error');
+                passwordError.classList.add('show');
+                isValid = false;
+            }
+            
+            if (isValid) {
+                // Form is valid - you can add your login logic here
+                console.log('Form submitted successfully!');
+                console.log('Username:', username.value);
+                console.log('Password:', password.value);
+                console.log('Remember me:', document.getElementById('rememberMe').checked);
+                
+                // Show success message (in a real app, you would redirect or make an API call)
+                alert('Login successful! (This is a demo)');
+                
+                // Reset form
+                this.reset();
+            }
+        });
+
+        // Add real-time validation
+        document.getElementById('username').addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('error');
+                document.getElementById('usernameError').classList.remove('show');
+            }
+        });
+
+        document.getElementById('password').addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('error');
+                document.getElementById('passwordError').classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
 ```
-
-**LoginForm.module.css**
-```css
-.loginContainer {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-}
-
-.loginForm {
-  background: white;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
-  animation: slideUp 0.5s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #2d3748;
-  text-align: center;
-  margin-bottom: 8px;
-}
-
-.subtitle {
-  text-align: center;
-  color: #718096;
-  margin-bottom: 32px;
-  font-size: 14px;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.formGroup {
-  display: flex;
-  flex-direction: column;
-}
-
-.label {
-  font-weight: 600;
-  color: #4a5568;
-  margin-bottom: 8px;
-  font-size: 14px;
-}
-
-.input {
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: all 0.2s ease;
-  background-color: white;
-}
-
-.input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.input:disabled {
-  background-color: #f7fafc;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.inputError {
-  border-color: #e53e3e;
-}
-
-.inputError:focus {
-  border-color: #e53e3e;
-  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
-}
-
-.errorText {
-  color: #e53e3e;
-  font-size: 12px;
-  margin-top: 4px;
-  font-weight: 500;
-}
-
-.submitButton {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 14px 20px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 8px;
-}
-
-.submitButton:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.submitButton:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.loadingText {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid transparent;
-  border-top: 2px solid white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.successMessage {
-  background-color: #c6f6d5;
-  color: #22543d;
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  font-size: 14px;
-  font-weight: 500;
-  border: 1px solid #9ae6b4;
-}
-
-.errorMessage {
-  background-color: #fed7d7;
-  color: #742a2a;
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  font-size: 14px;
-  font-weight: 500;
-  border: 1px solid #feb2b2;
-}
-
-.footer {
-  text-align: center;
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.link {
-  color: #667eea;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.link:hover {
-  color: #5a67d8;
-  text-decoration: underline;
-}
-
-/* Responsive design */
-@media (max-width: 480px) {
-  .loginContainer {
-    padding: 16px;
-  }
-  
-  .loginForm {
-    padding: 24px;
-  }
-  
-  .title {
-    font-size: 24px;
-  }
-}
-```
-
-**App.js (Main component to use the login form)**
-```jsx
-import React from 'react';
-import LoginForm from './LoginForm';
-
-function App() {
-  return (
-    <div className="App">
-      <LoginForm />
-    </div>
-  );
-}
-
-export default App;
-```
-
-This implementation provides:
-
-1. **Complete React component structure** with email and password fields
-2. **Form validation** for required fields, email format, and password length
-3. **State management** using useState hooks for form data, errors, loading states, and login status
-4. **Responsive CSS styling** with CSS Modules for scoped styling
-5. **Mock authentication handler** that simulates API calls
-6. **Loading states** with spinner animation
-7. **Success/error feedback** with styled messages
-8. **Accessibility features** including proper labels and focus states
-9. **Responsive design** that works on mobile devices
-10. **Smooth animations** and transitions for better user experience
-
-The form validates email format, checks for required fields, and provides real-time feedback. The mock authentication simulates a 1.5-second API call and validates against hardcoded credentials (user@example.com / password123).
