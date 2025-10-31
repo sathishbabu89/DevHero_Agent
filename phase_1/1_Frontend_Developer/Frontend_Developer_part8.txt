@@ -1,0 +1,94 @@
+import axios from 'axios';
+
+// Create axios instance with base configuration
+const apiClient = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || 'https://jsonplaceholder.typicode.com',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to add auth token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for error handling
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export const authService = {
+  async login(credentials) {
+    try {
+      // Mock API call - replace with your actual API endpoint
+      // const response = await apiClient.post('/auth/login', credentials);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Mock response - replace with actual API response handling
+      if (credentials.email === 'demo@example.com' && credentials.password === 'password123') {
+        return {
+          success: true,
+          user: {
+            id: 1,
+            name: 'Demo User',
+            email: credentials.email,
+            role: 'user'
+          },
+          token: 'mock-jwt-token-12345'
+        };
+      } else {
+        return {
+          success: false,
+          message: 'Invalid email or password'
+        };
+      }
+    } catch (error) {
+      console.error('Login service error:', error);
+      throw new Error('Network error occurred. Please try again.');
+    }
+  },
+
+  async logout() {
+    try {
+      // await apiClient.post('/auth/logout');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+      return { success: true };
+    } catch (error) {
+      console.error('Logout service error:', error);
+      throw error;
+    }
+  },
+
+  async validateToken() {
+    try {
+      // const response = await apiClient.get('/auth/validate');
+      // return response.data;
+      return { valid: true };
+    } catch (error) {
+      console.error('Token validation error:', error);
+      throw error;
+    }
+  }
+};
