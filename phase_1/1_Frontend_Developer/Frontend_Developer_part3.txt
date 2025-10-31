@@ -1,14 +1,44 @@
-// App.js (Main component to use the Login)
-import React from 'react';
-import Login from './Login';
-import './App.css';
+// src/styles/GlobalStyles.js
+import { createGlobalStyle } from 'styled-components';
 
-function App() {
-  return (
-    <div className="App">
-      <Login />
-    </div>
-  );
-}
+const GlobalStyles = createGlobalStyle`
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-export default App;
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: ${props => props.theme.colors.background};
+    color: ${props => props.theme.colors.text};
+    line-height: 1.6;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  h1, h2, h3 {
+    color: ${props => props.theme.colors.primary};
+    margin-bottom: 1rem;
+  }
+
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    padding: 12px 24px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+`;
+
+export default GlobalStyles;

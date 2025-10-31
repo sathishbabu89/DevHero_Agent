@@ -1,49 +1,25 @@
+// src/App.jsx
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LoginForm from './components/LoginForm/LoginForm';
-import Dashboard from './components/Dashboard/Dashboard';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import styles from './App.module.css';
-
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? children : <Navigate to="/login" />;
-};
-
-// Public Route Component (redirect if already authenticated)
-const PublicRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  return !isAuthenticated ? children : <Navigate to="/dashboard" />;
-};
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from 'styled-components';
+import CustomerSupportNeeds from './components/CustomerSupportNeeds';
+import ReviewScreen from './components/ReviewScreen';
+import GlobalStyles from './styles/GlobalStyles';
+import { theme } from './styles/theme';
 
 function App() {
   return (
-    <AuthProvider>
+    <ThemeProvider theme={theme}>
+      <GlobalStyles />
       <Router>
-        <div className={styles.app}>
+        <div className="App">
           <Routes>
-            <Route 
-              path="/login" 
-              element={
-                <PublicRoute>
-                  <LoginForm />
-                </PublicRoute>
-              } 
-            />
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route path="/" element={<Navigate to="/login" />} />
+            <Route path="/" element={<CustomerSupportNeeds />} />
+            <Route path="/review" element={<ReviewScreen />} />
           </Routes>
         </div>
       </Router>
-    </AuthProvider>
+    </ThemeProvider>
   );
 }
 

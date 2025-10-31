@@ -1,0 +1,270 @@
+// src/components/CustomerSupportNeeds.jsx
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Formik, Form, Field, FieldArray } from 'formik';
+import styled from 'styled-components';
+import { useForm } from '../context/FormContext';
+
+const Container = styled.div`
+  max-width: 800px;
+  margin: 0 auto;
+  padding: ${props => props.theme.spacing.xl};
+`;
+
+const Card = styled.div`
+  background: ${props => props.theme.colors.surface};
+  border-radius: ${props => props.theme.borderRadius};
+  padding: ${props => props.theme.spacing.xl};
+  margin-bottom: ${props => props.theme.spacing.xl};
+  box-shadow: ${props => props.theme.shadows.md};
+`;
+
+const Section = styled.div`
+  margin-bottom: ${props => props.theme.spacing.xl};
+`;
+
+const SectionTitle = styled.h2`
+  color: ${props => props.theme.colors.primary};
+  margin-bottom: ${props => props.theme.spacing.md};
+  font-size: 1.5rem;
+`;
+
+const RadioGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${props => props.theme.spacing.sm};
+`;
+
+const RadioLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: ${props => props.theme.spacing.sm};
+  cursor: pointer;
+  padding: ${props => props.theme.spacing.sm};
+  border-radius: 4px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: ${props => props.theme.colors.background};
+  }
+`;
+
+const CheckboxGroup = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: ${props => props.theme.spacing.sm};
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: ${props => props.theme.spacing.sm};
+  cursor: pointer;
+  padding: ${props => props.theme.spacing.sm};
+  border-radius: 4px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: ${props => props.theme.colors.background};
+  }
+`;
+
+const Button = styled.button`
+  background-color: ${props => props.theme.colors.primary};
+  color: white;
+  font-weight: 600;
+  padding: 12px 32px;
+  border-radius: ${props => props.theme.borderRadius};
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: ${props => props.theme.shadows.md};
+  }
+`;
+
+const ErrorMessage = styled.div`
+  color: ${props => props.theme.colors.danger};
+  font-size: 0.875rem;
+  margin-top: ${props => props.theme.spacing.xs};
+`;
+
+const CustomerSupportNeeds = () => {
+  const navigate = useNavigate();
+  const { formData, updateFormData } = useForm();
+
+  const letterFormats = [
+    { value: 'standard', label: 'Standard Letter Format' },
+    { value: 'large-print', label: 'Large Print Format' },
+    { value: 'braille', label: 'Braille Format' },
+    { value: 'digital', label: 'Digital/Email Format' }
+  ];
+
+  const communicationOptions = [
+    { value: 'email', label: 'Email Updates' },
+    { value: 'sms', label: 'SMS Text Messages' },
+    { value: 'phone', label: 'Phone Calls' },
+    { value: 'post', label: 'Postal Mail' },
+    { value: 'app-notifications', label: 'Mobile App Notifications' }
+  ];
+
+  const branchSupportOptions = [
+    { value: 'appointment-booking', label: 'Appointment Booking Assistance' },
+    { value: 'document-help', label: 'Document Preparation Help' },
+    { value: 'language-support', label: 'Language Translation Support' },
+    { value: 'accessibility', label: 'Accessibility Accommodations' },
+    { value: 'emergency-support', label: 'Emergency Support Services' }
+  ];
+
+  const initialValues = {
+    letterFormat: formData.letterFormat || '',
+    communicationPreferences: formData.communicationPreferences || [],
+    branchSupport: formData.branchSupport || []
+  };
+
+  const validateForm = (values) => {
+    const errors = {};
+
+    if (!values.letterFormat) {
+      errors.letterFormat = 'Please select a letter format';
+    }
+
+    if (values.communicationPreferences.length === 0) {
+      errors.communicationPreferences = 'Please select at least one communication preference';
+    }
+
+    return errors;
+  };
+
+  const handleSubmit = (values) => {
+    updateFormData(values);
+    navigate('/review');
+  };
+
+  return (
+    <Container>
+      <h1>Customer Support Needs</h1>
+      <p>Please tell us about your support preferences and requirements.</p>
+
+      <Formik
+        initialValues={initialValues}
+        validate={validateForm}
+        onSubmit={handleSubmit}
+      >
+        {({ values, errors, touched, isSubmitting }) => (
+          <Form>
+            {/* Letter and Statement Format Section */}
+            <Card>
+              <Section>
+                <SectionTitle>Letter and Statement Format</SectionTitle>
+                <p>Please select your preferred format for correspondence:</p>
+                
+                <Field name="letterFormat">
+                  {({ field }) => (
+                    <RadioGroup>
+                      {letterFormats.map((format) => (
+                        <RadioLabel key={format.value}>
+                          <input
+                            type="radio"
+                            {...field}
+                            value={format.value}
+                            checked={field.value === format.value}
+                            onChange={() => field.onChange({ target: { value: format.value } })}
+                          />
+                          {format.label}
+                        </RadioLabel>
+                      ))}
+                    </RadioGroup>
+                  )}
+                </Field>
+                {errors.letterFormat && touched.letterFormat && (
+                  <ErrorMessage>{errors.letterFormat}</ErrorMessage>
+                )}
+              </Section>
+            </Card>
+
+            {/* Communication Preferences Section */}
+            <Card>
+              <Section>
+                <SectionTitle>Communication Preferences</SectionTitle>
+                <p>Select how you'd like to receive updates and communications:</p>
+                
+                <FieldArray name="communicationPreferences">
+                  {({ push, remove }) => (
+                    <CheckboxGroup>
+                      {communicationOptions.map((option) => (
+                        <CheckboxLabel key={option.value}>
+                          <Field
+                            type="checkbox"
+                            name="communicationPreferences"
+                            value={option.value}
+                            checked={values.communicationPreferences.includes(option.value)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                push(option.value);
+                              } else {
+                                const index = values.communicationPreferences.indexOf(option.value);
+                                remove(index);
+                              }
+                            }}
+                          />
+                          {option.label}
+                        </CheckboxLabel>
+                      ))}
+                    </CheckboxGroup>
+                  )}
+                </FieldArray>
+                {errors.communicationPreferences && touched.communicationPreferences && (
+                  <ErrorMessage>{errors.communicationPreferences}</ErrorMessage>
+                )}
+              </Section>
+            </Card>
+
+            {/* Branch Appointment Support Section */}
+            <Card>
+              <Section>
+                <SectionTitle>Branch Appointment Support</SectionTitle>
+                <p>Select the types of support you may need during branch visits:</p>
+                
+                <FieldArray name="branchSupport">
+                  {({ push, remove }) => (
+                    <CheckboxGroup>
+                      {branchSupportOptions.map((option) => (
+                        <CheckboxLabel key={option.value}>
+                          <Field
+                            type="checkbox"
+                            name="branchSupport"
+                            value={option.value}
+                            checked={values.branchSupport.includes(option.value)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                push(option.value);
+                              } else {
+                                const index = values.branchSupport.indexOf(option.value);
+                                remove(index);
+                              }
+                            }}
+                          />
+                          {option.label}
+                        </CheckboxLabel>
+                      ))}
+                    </CheckboxGroup>
+                  )}
+                </FieldArray>
+              </Section>
+            </Card>
+
+            <div style={{ textAlign: 'center', marginTop: '32px' }}>
+              <Button type="submit" disabled={isSubmitting}>
+                Continue to Review
+              </Button>
+            </div>
+          </Form>
+        )}
+      </Formik>
+    </Container>
+  );
+};
+
+export default CustomerSupportNeeds;
